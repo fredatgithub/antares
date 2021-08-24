@@ -1,21 +1,28 @@
-'use strict';
+import { ConnectionArguments, QueryObject, QueryArguments } from '../interfaces/misc';
+
 /**
  * As Simple As Possible Query Builder Core
  *
  * @class AntaresCore
  */
 export class AntaresCore {
+   protected _client: string;
+   protected _params;
+   protected _poolSize: number | false;
+   protected _logger: Function;
+   protected _queryDefaults: QueryObject;
+   protected _query: QueryObject;
+
    /**
     * Creates an instance of AntaresCore.
     *
-    * @param {Object} args connection params
+    * @param {ConnectionArguments} args connection params
     * @memberof AntaresCore
     */
-   constructor (args) {
+   constructor (args: ConnectionArguments) {
       this._client = args.client;
       this._params = args.params;
       this._poolSize = args.poolSize || false;
-      this._connection = null;
       this._logger = args.logger || console.log;
 
       this._queryDefaults = {
@@ -35,24 +42,19 @@ export class AntaresCore {
       this._query = Object.assign({}, this._queryDefaults);
    }
 
-   _reducer (acc, curr) {
-      const type = typeof curr;
+   _reducer (acc:Array<string | number>, curr: number | string | Array<string | number> | { [key: string]: string; }) {
+      if (typeof curr === 'number' || typeof curr === 'string')
+         return [...acc, curr];
+      if (Array.isArray(curr))
+         return [...acc, ...curr];
+      else if (typeof curr === 'object') {
+         const clausoles: Array<string> = [];
+         for (const key in curr)
+            clausoles.push(`${key} ${curr[key]}`);
 
-      switch (type) {
-         case 'number':
-         case 'string':
-            return [...acc, curr];
-         case 'object':
-            if (Array.isArray(curr))
-               return [...acc, ...curr];
-            else {
-               const clausoles = [];
-               for (const key in curr)
-                  clausoles.push(`${key} ${curr[key]}`);
-
-               return clausoles;
-            }
+         return clausoles;
       }
+      return acc;
    }
 
    /**
@@ -64,53 +66,53 @@ export class AntaresCore {
       this._query = Object.assign({}, this._queryDefaults);
    }
 
-   schema (schema) {
+   schema (schema: string) {
       this._query.schema = schema;
       return this;
    }
 
-   select (...args) {
+   select (...args: Array<string>) {
       this._query.select = [...this._query.select, ...args];
       return this;
    }
 
-   from (table) {
+   from (table: string) {
       this._query.from = table;
       return this;
    }
 
-   into (table) {
+   into (table: string) {
       this._query.from = table;
       return this;
    }
 
-   delete (table) {
+   delete (table: string) {
       this._query.delete = true;
       this.from(table);
       return this;
    }
 
-   where (...args) {
+   where (...args: Array<string>) {
       this._query.where = [...this._query.where, ...args];
       return this;
    }
 
-   groupBy (...args) {
+   groupBy (...args: Array<string>) {
       this._query.groupBy = [...this._query.groupBy, ...args];
       return this;
    }
 
-   orderBy (...args) {
+   orderBy (...args: Array<string>) {
       this._query.orderBy = [...this._query.orderBy, ...args];
       return this;
    }
 
-   limit (...args) {
+   limit (...args: Array<string>) {
       this._query.limit = args;
       return this;
    }
 
-   offset (...args) {
+   offset (...args: Array<string>) {
       this._query.offset = args;
       return this;
    }
@@ -120,7 +122,7 @@ export class AntaresCore {
     * @returns
     * @memberof AntaresCore
     */
-   update (...args) {
+   update (...args: Array<string>) {
       this._query.update = [...this._query.update, ...args];
       return this;
    }
@@ -130,19 +132,25 @@ export class AntaresCore {
     * @returns
     * @memberof AntaresCore
     */
-   insert (arr) {
+   insert (arr: Array<string>) {
       this._query.insert = [...this._query.insert, ...arr];
       return this;
    }
 
    /**
-    * @param {Object} args
+    * @param {QueryArguments} args
     * @returns {Promise}
     * @memberof AntaresCore
     */
-   run (args) {
+   run (args: Array<QueryArguments>) {
       const rawQuery = this.getSQL();
       this._resetQuery();
       return this.raw(rawQuery, args);
+   }
+
+   raw (query: string, args?: Array<QueryArguments>): Promise<any> | void {}
+
+   getSQL (): string {
+      return '';
    }
 }

@@ -1,5 +1,3 @@
-'use strict';
-
 import { app, BrowserWindow, /* session, */ nativeImage, Menu } from 'electron';
 import * as path from 'path';
 import Store from 'electron-store';
@@ -14,7 +12,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
-let mainWindow;
+let mainWindow: BrowserWindow | null;
 
 async function createMainWindow () {
    const icon = require('../renderer/images/logo-32.png');
@@ -29,7 +27,7 @@ async function createMainWindow () {
       webPreferences: {
          nodeIntegration: true,
          contextIsolation: false,
-         'web-security': false,
+         webSecurity: false,
          enableRemoteModule: true,
          spellcheck: false
       },

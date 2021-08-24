@@ -1,14 +1,26 @@
 'use strict';
 import mysql from 'mysql2/promise';
 import { AntaresCore } from '../AntaresCore';
-import dataTypes from 'common/data-types/mysql';
-import * as SSH2Promise from 'ssh2-promise';
+import SSH2Promise from 'ssh2-promise';
+import { DatabaseType, DatabaseTypes, ConnectionArguments, QueryArguments } from '../../interfaces/misc';
+import TunnelConfig from 'ssh2-promise/lib/tunnelConfig';
+
+const dataTypes: Array<DatabaseTypes> = require('common/data-types/mysql');
 
 export class MySQLClient extends AntaresCore {
-   constructor (args) {
+   private _schema: string | null;
+   private _ssh: SSH2Promise | null;
+   private _tunnel: TunnelConfig | null;
+   protected _connection: mysql.Connection | mysql.Pool | null;
+   public types: {[key:number]: string}
+
+   constructor (args: ConnectionArguments) {
       super(args);
 
+      this._connection = null;
       this._schema = null;
+      this._ssh = null;
+      this._tunnel = null;
 
       this.types = {
          0: 'DECIMAL',
@@ -45,7 +57,7 @@ export class MySQLClient extends AntaresCore {
       };
    }
 
-   _getType (field) {
+   _getType (field: mysql.FieldPacket) {
       let name = this.types[field.columnType];
       let length = field.columnLength;
 
@@ -93,9 +105,9 @@ export class MySQLClient extends AntaresCore {
       return { name, length };
    }
 
-   _getTypeInfo (type) {
+   _getTypeInfo (type: string) {
       return dataTypes
-         .reduce((acc, group) => [...acc, ...group.types], [])
+         .reduce((acc:Array<DatabaseType>, curr) => [...acc, ...curr.types], [])
          .filter(_type => _type.name === type.toUpperCase())[0];
    }
 
@@ -103,19 +115,21 @@ export class MySQLClient extends AntaresCore {
     * @memberof MySQLClient
     */
    async connect () {
-      delete this._params.application_name;
+      delete this._params.applicationName;
 
-      const dbConfig = {
+      const dbConfig: mysql.ConnectionOptions = {
          host: this._params.host,
          port: this._params.port,
          user: this._params.user,
          password: this._params.password,
-         ssl: null
+         ssl: undefined
       };
 
-      if (this._params.schema?.length) dbConfig.database = this._params.schema;
+      if (this._params.schema?.length)
+         dbConfig.database = this._params.schema;
 
-      if (this._params.ssl) dbConfig.ssl = { ...this._params.ssl };
+      if (this._params.ssl)
+         dbConfig.ssl = { ...this._params.ssl };
 
       if (this._params.ssh) {
          this._ssh = new SSH2Promise({ ...this._params.ssh });
@@ -124,7 +138,9 @@ export class MySQLClient extends AntaresCore {
             remoteAddr: this._params.host,
             remotePort: this._params.port
          });
-         dbConfig.port = this._tunnel.localPort;
+
+         if (this._tunnel)
+            dbConfig.port = this._tunnel.localPort;
       }
 
       if (!this._poolSize)
@@ -147,8 +163,10 @@ export class MySQLClient extends AntaresCore {
     * @memberof MySQLClient
     */
    destroy () {
-      this._connection.end();
-      if (this._ssh) this._ssh.close();
+      if (this._connection)
+         this._connection.end();
+      if (this._ssh)
+         this._ssh.close();
    }
 
    /**
@@ -157,7 +175,7 @@ export class MySQLClient extends AntaresCore {
     * @param {String} schema
     * @memberof MySQLClient
     */
-   use (schema) {
+   use (schema: string) {
       this._schema = schema;
       return this.raw(`USE \`${schema}\``);
    }
@@ -167,7 +185,7 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} databases scructure
     * @memberof MySQLClient
     */
-   async getStructure (schemas) {
+   async getStructure (schemas: Array<string>) {
       const { rows: databases } = await this.raw('SHOW DATABASES');
 
       let filteredDatabases = databases;
@@ -1462,18 +1480,22 @@ export class MySQLClient extends AntaresCore {
    }
 
    /**
-    * @param {string} sql raw SQL query
-    * @param {object} args
-    * @param {boolean} args.nest
-    * @param {boolean} args.details
-    * @param {boolean} args.split
+    * @param {String} sql raw SQL query
+    * @param {QueryArguments=} args
+    * @param {String} args.schema
+    * @param {Boolean} args.nest
+    * @param {Boolean} args.details
+    * @param {Boolean} args.split
+    * @param {Boolean} args.comments
     * @returns {Promise}
     * @memberof MySQLClient
     */
-   async raw (sql, args) {
+   async raw (sql: string, args?: Array<QueryArguments>) {
+      if (!this._connection) throw new Error('No connection available');
+
       if (process.env.NODE_ENV === 'development') this._logger(sql);// TODO: replace BLOB content with a placeholder
 
-      args = {
+      const internalArgs: QueryArguments = {
          nest: false,
          details: false,
          split: true,
@@ -1481,22 +1503,22 @@ export class MySQLClient extends AntaresCore {
          ...args
       };
 
-      if (!args.comments)
+      if (!internalArgs.comments)
          sql = sql.replace(/(\/\*(.|[\r\n])*?\*\/)|(--(.*|[\r\n]))/gm, '');// Remove comments
 
-      const nestTables = args.nest ? '.' : false;
+      const nestTables = internalArgs.nest ? '.' : false;
       const resultsArr = [];
       let paramsArr = [];
-      const queries = args.split
+      const queries = internalArgs.split
          ? sql.split(/((?:[^;'"]*(?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*')[^;'"]*)+)|;/gm)
             .filter(Boolean)
             .map(q => q.trim())
          : [sql];
-      const isPool = typeof this._connection.getConnection === 'function';
-      const connection = isPool ? await this._connection.getConnection() : this._connection;
+      const isPool: boolean = typeof (this._connection as mysql.Pool).getConnection === 'function';
+      const connection = isPool ? await (this._connection as mysql.Pool).getConnection() : this._connection;
 
-      if (args.schema)
-         await connection.query(`USE \`${args.schema}\``);
+      if (internalArgs.schema)
+         await connection.query(`USE \`${internalArgs.schema}\``);
 
       for (const query of queries) {
          if (!query) continue;
@@ -1520,7 +1542,7 @@ export class MySQLClient extends AntaresCore {
                         name: field.orgName,
                         alias: field.name,
                         orgName: field.orgName,
-                        schema: args.schema || field.schema,
+                        schema: internalArgs.schema || field.schema,
                         table: field.table,
                         tableAlias: field.table,
                         orgTable: field.orgTable,
@@ -1530,8 +1552,8 @@ export class MySQLClient extends AntaresCore {
                   }).filter(Boolean)
                   : [];
 
-               if (args.details) {
-                  let cachedTable;
+               if (internalArgs.details) {
+                  let cachedTable: string | undefined;
 
                   if (remappedFields.length) {
                      paramsArr = remappedFields.map(field => {
@@ -1555,7 +1577,8 @@ export class MySQLClient extends AntaresCore {
                            });
                         }
                         catch (err) {
-                           if (isPool) connection.release();
+                           if (isPool)
+                              (connection as any).release();
                            reject(err);
                         }
 
@@ -1564,7 +1587,8 @@ export class MySQLClient extends AntaresCore {
                            keysArr = keysArr ? [...keysArr, ...response] : response;
                         }
                         catch (err) {
-                           if (isPool) connection.release();
+                           if (isPool)
+                              (connection as mysql.Pool).release();
                            reject(err);
                         }
                      }

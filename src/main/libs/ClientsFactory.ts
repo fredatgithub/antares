@@ -1,8 +1,9 @@
-'use strict';
 import { MySQLClient } from './clients/MySQLClient';
 import { PostgreSQLClient } from './clients/PostgreSQLClient';
 
-const queryLogger = sql => {
+import { ConnectionArguments } from '../interfaces/misc';
+
+const queryLogger = (sql: string) => {
    // Remove comments, newlines and multiple spaces
    const escapedSql = sql.replace(/(\/\*(.|[\r\n])*?\*\/)|(--(.*|[\r\n]))/gm, '').replace(/\s\s+/g, ' ');
    console.log(escapedSql);
@@ -28,7 +29,7 @@ export class ClientsFactory {
     * @returns Database Connection
     * @memberof ClientsFactory
     */
-   static getConnection (args) {
+   static getConnection (args: ConnectionArguments) {
       args.logger = queryLogger;
 
       switch (args.client) {

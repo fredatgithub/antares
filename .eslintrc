@@ -8,8 +8,9 @@
         "standard",
         "plugin:vue/recommended"
     ],
+    "plugins": ["@typescript-eslint"],
     "parserOptions": {
-        "parser": "@babel/eslint-parser",
+        "parser": "@typescript-eslint/parser",
         "ecmaVersion": 9,
         "sourceType": "module",
         "requireConfigFile": false
