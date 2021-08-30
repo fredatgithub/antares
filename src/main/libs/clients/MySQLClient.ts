@@ -1,14 +1,26 @@
-'use strict';
 import mysql from 'mysql2/promise';
 import { AntaresCore } from '../AntaresCore';
 import SSH2Promise from 'ssh2-promise';
-import { DatabaseType, DatabaseTypes, ConnectionArguments, QueryArguments } from '../../interfaces/misc';
+import { ClientClass } from '../../interfaces/ClientClass';
+import {
+   DatabaseType,
+   DatabaseTypes,
+   ConnectionArguments,
+   ColumnPacket,
+   QueryArguments,
+   QueryResult,
+   TableParams,
+   ViewParams,
+   TriggerParams,
+   RoutineParams,
+   FunctionParams,
+   SchedulerParams
+} from '../../interfaces/misc';
 import TunnelConfig from 'ssh2-promise/lib/tunnelConfig';
 
 const dataTypes: Array<DatabaseTypes> = require('common/data-types/mysql');
 
-export class MySQLClient extends AntaresCore {
-   private _schema: string | null;
+export class MySQLClient extends AntaresCore implements ClientClass {
    private _ssh: SSH2Promise | null;
    private _tunnel: TunnelConfig | null;
    protected _connection: mysql.Connection | mysql.Pool | null;
@@ -18,7 +30,6 @@ export class MySQLClient extends AntaresCore {
       super(args);
 
       this._connection = null;
-      this._schema = null;
       this._ssh = null;
       this._tunnel = null;
 
@@ -57,7 +68,7 @@ export class MySQLClient extends AntaresCore {
       };
    }
 
-   _getType (field: mysql.FieldPacket) {
+   _getType (field: {[key: string]: any}) {
       let name = this.types[field.columnType];
       let length = field.columnLength;
 
@@ -115,7 +126,7 @@ export class MySQLClient extends AntaresCore {
     * @memberof MySQLClient
     */
    async connect () {
-      delete this._params.applicationName;
+      delete this._params.application_name;
 
       const dbConfig: mysql.ConnectionOptions = {
          host: this._params.host,
@@ -163,10 +174,8 @@ export class MySQLClient extends AntaresCore {
     * @memberof MySQLClient
     */
    destroy () {
-      if (this._connection)
-         this._connection.end();
-      if (this._ssh)
-         this._ssh.close();
+      this._connection?.end();
+      this._ssh?.close();
    }
 
    /**
@@ -175,9 +184,8 @@ export class MySQLClient extends AntaresCore {
     * @param {String} schema
     * @memberof MySQLClient
     */
-   use (schema: string) {
-      this._schema = schema;
-      return this.raw(`USE \`${schema}\``);
+   async use (schema: string) {
+      await this.raw(`USE \`${schema}\``);
    }
 
    /**
@@ -185,26 +193,28 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} databases scructure
     * @memberof MySQLClient
     */
-   async getStructure (schemas: Array<string>) {
-      const { rows: databases } = await this.raw('SHOW DATABASES');
+   async getStructure (schemas: Set<string>) {
+      const { rows: databases } = <QueryResult> await this.raw('SHOW DATABASES');
+
+      if (!databases) return;
 
       let filteredDatabases = databases;
 
       if (this._params.schema)
          filteredDatabases = filteredDatabases.filter(db => db.Database === this._params.schema);
 
-      const { rows: functions } = await this.raw('SHOW FUNCTION STATUS');
-      const { rows: procedures } = await this.raw('SHOW PROCEDURE STATUS');
-      const { rows: schedulers } = await this.raw('SELECT *, EVENT_SCHEMA AS `Db`, EVENT_NAME AS `Name` FROM information_schema.`EVENTS`');
+      const { rows: functions } = <QueryResult> await this.raw('SHOW FUNCTION STATUS');
+      const { rows: procedures } = <QueryResult> await this.raw('SHOW PROCEDURE STATUS');
+      const { rows: schedulers } = <QueryResult> await this.raw('SELECT *, EVENT_SCHEMA AS `Db`, EVENT_NAME AS `Name` FROM information_schema.`EVENTS`');
 
-      const tablesArr = [];
-      const triggersArr = [];
+      const tablesArr: Array<mysql.RowDataPacket> = [];
+      const triggersArr: Array<mysql.RowDataPacket> = [];
 
       for (const db of filteredDatabases) {
          if (!schemas.has(db.Database)) continue;
 
-         let { rows: tables } = await this.raw(`SHOW TABLE STATUS FROM \`${db.Database}\``);
-         if (tables.length) {
+         let { rows: tables } = <QueryResult> await this.raw(`SHOW TABLE STATUS FROM \`${db.Database}\``);
+         if (tables?.length) {
             tables = tables.map(table => {
                table.Db = db.Database;
                return table;
@@ -212,8 +222,8 @@ export class MySQLClient extends AntaresCore {
             tablesArr.push(...tables);
          }
 
-         let { rows: triggers } = await this.raw(`SHOW TRIGGERS FROM \`${db.Database}\``);
-         if (triggers.length) {
+         let { rows: triggers } = <QueryResult> await this.raw(`SHOW TRIGGERS FROM \`${db.Database}\``);
+         if (triggers?.length) {
             triggers = triggers.map(trigger => {
                trigger.Db = db.Database;
                return trigger;
@@ -251,7 +261,7 @@ export class MySQLClient extends AntaresCore {
             });
 
             // PROCEDURES
-            const remappedProcedures = procedures.filter(procedure => procedure.Db === db.Database).map(procedure => {
+            const remappedProcedures = procedures?.filter(procedure => procedure.Db === db.Database).map(procedure => {
                return {
                   name: procedure.Name,
                   type: procedure.Type,
@@ -265,7 +275,7 @@ export class MySQLClient extends AntaresCore {
             });
 
             // FUNCTIONS
-            const remappedFunctions = functions.filter(func => func.Db === db.Database).map(func => {
+            const remappedFunctions = functions?.filter(func => func.Db === db.Database).map(func => {
                return {
                   name: func.Name,
                   type: func.Type,
@@ -279,7 +289,7 @@ export class MySQLClient extends AntaresCore {
             });
 
             // SCHEDULERS
-            const remappedSchedulers = schedulers.filter(scheduler => scheduler.Db === db.Database).map(scheduler => {
+            const remappedSchedulers = schedulers?.filter(scheduler => scheduler.Db === db.Database).map(scheduler => {
                return {
                   name: scheduler.EVENT_NAME,
                   definition: scheduler.EVENT_DEFINITION,
@@ -348,7 +358,7 @@ export class MySQLClient extends AntaresCore {
     * @returns {Object} table scructure
     * @memberof MySQLClient
     */
-   async getTableColumns ({ schema, table }) {
+   async getTableColumns ({ schema, table }: { schema: string, table: string}): Promise<Array<ColumnPacket> | undefined> {
       const { rows } = await this
          .select('*')
          .schema('information_schema')
@@ -357,15 +367,15 @@ export class MySQLClient extends AntaresCore {
          .orderBy({ ORDINAL_POSITION: 'ASC' })
          .run();
 
-      const { rows: fields } = await this.raw(`SHOW CREATE TABLE \`${schema}\`.\`${table}\``);
+      const { rows: fields } = <QueryResult> await this.raw(`SHOW CREATE TABLE \`${schema}\`.\`${table}\``);
 
-      const remappedFields = fields.map(row => {
+      const remappedFields = fields?.map(row => {
          if (!row['Create Table']) return false;
 
          let n = 0;
          return row['Create Table']
             .split('')
-            .reduce((acc, curr) => {
+            .reduce((acc: string, curr: string) => {
                if (curr === ')') n--;
                if (n !== 0) acc += curr;
                if (curr === '(') n++;
@@ -373,27 +383,30 @@ export class MySQLClient extends AntaresCore {
             }, '')
             .replaceAll('\n', '')
             .split(',')
-            .map(f => {
+            .map((f: string) => {
                try {
                   const fieldArr = f.trim().split(' ');
                   const nameAndType = fieldArr.slice(0, 2);
                   if (nameAndType[0].charAt(0) !== '`') return false;
 
-                  const details = fieldArr.slice(2).join(' ');
-                  let defaultValue = null;
-                  if (details.includes('DEFAULT'))
-                     defaultValue = details.match(/(?<=DEFAULT ).*?$/gs)[0].split(' COMMENT')[0];
+                  const details: string = fieldArr.slice(2).join(' ');
+                  let defaultValue: string | null = null;
+
+                  if (details.includes('DEFAULT') && details) {
+                     const strings = details.match(/(?<=DEFAULT ).*?$/gs);
+                     defaultValue = strings?.length ? strings[0].split(' COMMENT')[0] : null;
                      // const defaultValueArr = defaultValue.split('');
                      // if (defaultValueArr[0] === '\'') {
                      //    defaultValueArr.shift();
                      //    defaultValueArr.pop();
                      //    defaultValue = defaultValueArr.join('');
                      // }
+                  }
 
                   const typeAndLength = nameAndType[1].replace(')', '').split('(');
 
                   return {
-                     name: nameAndType[0].replaceAll('`', ''),
+                     name: (nameAndType[0] as any).replaceAll('`', ''),
                      type: typeAndLength[0].toUpperCase(),
                      length: typeAndLength[1] ? typeAndLength[1] : null,
                      default: defaultValue
@@ -404,13 +417,13 @@ export class MySQLClient extends AntaresCore {
                }
             })
             .filter(Boolean)
-            .reduce((acc, curr) => {
+            .reduce((acc: {[key: string]: object}, curr: {[key: string]: string}) => {
                acc[curr.name] = curr;
                return acc;
             }, {});
       })[0];
 
-      return rows.map(field => {
+      return rows.map((field: mysql.RowDataPacket) => {
          let numLength = field.COLUMN_TYPE.match(/int\(([^)]+)\)/);
          numLength = numLength ? +numLength.pop() : null;
          const enumValues = /(enum|set)/.test(field.COLUMN_TYPE)
@@ -449,10 +462,10 @@ export class MySQLClient extends AntaresCore {
     * @returns {Object} table row count
     * @memberof MySQLClient
     */
-   async getTableApproximateCount ({ schema, table }) {
-      const { rows } = await this.raw(`SELECT table_rows "count" FROM information_schema.tables WHERE table_name = "${table}" AND table_schema = "${schema}"`);
+   async getTableApproximateCount ({ schema, table }:{ schema: string, table: string}) {
+      const { rows } = <QueryResult> await this.raw(`SELECT table_rows "count" FROM information_schema.tables WHERE table_name = "${table}" AND table_schema = "${schema}"`);
 
-      return rows.length ? rows[0].count : 0;
+      return rows?.length ? +rows[0].count : 0;
    }
 
    /**
@@ -462,10 +475,10 @@ export class MySQLClient extends AntaresCore {
     * @returns {Object} table options
     * @memberof MySQLClient
     */
-   async getTableOptions ({ schema, table }) {
-      const { rows } = await this.raw(`SHOW TABLE STATUS FROM \`${schema}\` WHERE Name = '${table}'`);
+   async getTableOptions ({ schema, table }:{ schema: string, table: string}): Promise<any> {
+      const { rows } = <QueryResult> await this.raw(`SHOW TABLE STATUS FROM \`${schema}\` WHERE Name = '${table}'`);
 
-      if (rows.length) {
+      if (rows?.length) {
          let tableType;
          switch (rows[0].Comment) {
             case 'VIEW':
@@ -499,10 +512,10 @@ export class MySQLClient extends AntaresCore {
     * @returns {Object} table indexes
     * @memberof MySQLClient
     */
-   async getTableIndexes ({ schema, table }) {
-      const { rows } = await this.raw(`SHOW INDEXES FROM \`${table}\` FROM \`${schema}\``);
+   async getTableIndexes ({ schema, table }:{ schema: string, table: string}): Promise<any> {
+      const { rows } = <QueryResult> await this.raw(`SHOW INDEXES FROM \`${table}\` FROM \`${schema}\``);
 
-      return rows.map(row => {
+      return rows?.map(row => {
          return {
             unique: !row.Non_unique,
             name: row.Key_name,
@@ -523,7 +536,7 @@ export class MySQLClient extends AntaresCore {
     * @returns {Object} table key usage
     * @memberof MySQLClient
     */
-   async getKeyUsage ({ schema, table }) {
+   async getKeyUsage ({ schema, table }:{ schema: string, table: string}): Promise<any> {
       const { rows } = await this
          .select('*')
          .schema('information_schema')
@@ -538,8 +551,8 @@ export class MySQLClient extends AntaresCore {
          .where({ CONSTRAINT_SCHEMA: `= '${schema}'`, TABLE_NAME: `= '${table}'`, REFERENCED_TABLE_NAME: 'IS NOT NULL' })
          .run();
 
-      return rows.map(field => {
-         const extra = extras.find(x => x.CONSTRAINT_NAME === field.CONSTRAINT_NAME);
+      return rows?.map((field: {[key: string]: string}) => {
+         const extra = extras.find((x: {[key: string]: string}) => x.CONSTRAINT_NAME === field.CONSTRAINT_NAME);
          return {
             schema: field.TABLE_SCHEMA,
             table: field.TABLE_NAME,
@@ -562,10 +575,10 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} users list
     * @memberof MySQLClient
     */
-   async getUsers () {
-      const { rows } = await this.raw('SELECT `user`, `host`, authentication_string AS `password` FROM `mysql`.`user`');
+   async getUsers (): Promise<any> {
+      const { rows } = <QueryResult> await this.raw('SELECT `user`, `host`, authentication_string AS `password` FROM `mysql`.`user`');
 
-      return rows.map(row => {
+      return rows?.map(row => {
          return {
             name: row.user,
             host: row.host,
@@ -580,8 +593,8 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async createSchema (params) {
-      return await this.raw(`CREATE DATABASE \`${params.name}\` COLLATE ${params.collation}`);
+   async createSchema (params: {name: string, collation: string}) {
+      await this.raw(`CREATE DATABASE \`${params.name}\` COLLATE ${params.collation}`);
    }
 
    /**
@@ -590,8 +603,8 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async alterSchema (params) {
-      return await this.raw(`ALTER DATABASE \`${params.name}\` COLLATE ${params.collation}`);
+   async alterSchema (params: {name: string, collation: string}) {
+      await this.raw(`ALTER DATABASE \`${params.name}\` COLLATE ${params.collation}`);
    }
 
    /**
@@ -600,16 +613,16 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async dropSchema (params) {
-      return await this.raw(`DROP DATABASE \`${params.database}\``);
+   async dropSchema (params: {database: string}) {
+      await this.raw(`DROP DATABASE \`${params.database}\``);
    }
 
    /**
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async getDatabaseCollation (params) {
-      return await this.raw(`SELECT \`DEFAULT_COLLATION_NAME\` FROM \`information_schema\`.\`SCHEMATA\` WHERE \`SCHEMA_NAME\`='${params.database}'`);
+   async getDatabaseCollation (params: {database: string}) {
+      return <QueryResult> await this.raw(`SELECT \`DEFAULT_COLLATION_NAME\` FROM \`information_schema\`.\`SCHEMATA\` WHERE \`SCHEMA_NAME\`='${params.database}'`);
    }
 
    /**
@@ -618,11 +631,11 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} view informations
     * @memberof MySQLClient
     */
-   async getViewInformations ({ schema, view }) {
+   async getViewInformations ({ schema, view }:{ schema: string, view: string}) {
       const sql = `SHOW CREATE VIEW \`${schema}\`.\`${view}\``;
-      const results = await this.raw(sql);
+      const results = <QueryResult> await this.raw(sql);
 
-      return results.rows.map(row => {
+      return results?.rows?.map(row => {
          return {
             algorithm: row['Create View'].match(/(?<=CREATE ALGORITHM=).*?(?=\s)/gs)[0],
             definer: row['Create View'].match(/(?<=DEFINER=).*?(?=\s)/gs)[0],
@@ -640,18 +653,18 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async dropView (params) {
+   async dropView (params:{ schema: string, view: string}) {
       const sql = `DROP VIEW \`${params.schema}\`.\`${params.view}\``;
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
-    * ALTER VIEW
     *
-    * @returns {Array.<Object>} parameters
+    *
+    * @param {{view: ViewParams}} params
     * @memberof MySQLClient
     */
-   async alterView (params) {
+   async alterView (params: {view: ViewParams}) {
       const { view } = params;
       let sql = `
          USE \`${view.schema}\`; 
@@ -663,31 +676,32 @@ export class MySQLClient extends AntaresCore {
       if (view.name !== view.oldName)
          sql += `; RENAME TABLE \`${view.schema}\`.\`${view.oldName}\` TO \`${view.schema}\`.\`${view.name}\``;
 
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
-    * CREATE VIEW
     *
-    * @returns {Array.<Object>} parameters
+    *
+    * @param {ViewParams} params
     * @memberof MySQLClient
     */
-   async createView (params) {
+   async createView (params: ViewParams) {
       const sql = `CREATE ALGORITHM = ${params.algorithm} ${params.definer ? `DEFINER=${params.definer} ` : ''}SQL SECURITY ${params.security} VIEW \`${params.schema}\`.\`${params.name}\` AS ${params.sql} ${params.updateOption ? `WITH ${params.updateOption} CHECK OPTION` : ''}`;
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
-    * SHOW CREATE TRIGGER
     *
-    * @returns {Array.<Object>} view informations
+    *
+    * @param {{ schema: string, trigger: string}} { schema, trigger }
+    * @return {*}
     * @memberof MySQLClient
     */
-   async getTriggerInformations ({ schema, trigger }) {
+   async getTriggerInformations ({ schema, trigger }:{ schema: string, trigger: string}) {
       const sql = `SHOW CREATE TRIGGER \`${schema}\`.\`${trigger}\``;
-      const results = await this.raw(sql);
+      const results = <QueryResult> await this.raw(sql);
 
-      return results.rows.map(row => {
+      return results?.rows?.map(row => {
          return {
             definer: row['SQL Original Statement'].match(/(?<=DEFINER=).*?(?=\s)/gs)[0],
             sql: row['SQL Original Statement'].match(/(BEGIN|begin)(.*)(END|end)/gs)[0],
@@ -700,60 +714,55 @@ export class MySQLClient extends AntaresCore {
    }
 
    /**
-    * DROP TRIGGER
     *
-    * @returns {Array.<Object>} parameters
+    *
+    * @param {{ schema: string, trigger: string}} params
     * @memberof MySQLClient
     */
-   async dropTrigger (params) {
+   async dropTrigger (params:{ schema: string, trigger: string}) {
       const sql = `DROP TRIGGER \`${params.schema}\`.\`${params.trigger}\``;
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
-    * ALTER TRIGGER
     *
-    * @returns {Array.<Object>} parameters
+    *
+    * @param {{trigger: TriggerParams}} params
     * @memberof MySQLClient
     */
-   async alterTrigger (params) {
+   async alterTrigger (params: {trigger: TriggerParams}) {
       const { trigger } = params;
       const tempTrigger = Object.assign({}, trigger);
       tempTrigger.name = `Antares_${tempTrigger.name}_tmp`;
 
-      try {
-         await this.createTrigger(tempTrigger);
-         await this.dropTrigger({ schema: trigger.schema, trigger: tempTrigger.name });
-         await this.dropTrigger({ schema: trigger.schema, trigger: trigger.oldName });
-         await this.createTrigger(trigger);
-      }
-      catch (err) {
-         return Promise.reject(err);
-      }
+      await this.dropTrigger({ schema: trigger.schema, trigger: tempTrigger.name });
+      await this.dropTrigger({ schema: trigger.schema, trigger: trigger.oldName });
+      await this.createTrigger(trigger);
    }
 
    /**
-    * CREATE TRIGGER
     *
-    * @returns {Array.<Object>} parameters
+    *
+    * @param {TriggerParams} params
     * @memberof MySQLClient
     */
-   async createTrigger (params) {
+   async createTrigger (params: TriggerParams) {
       const sql = `CREATE ${params.definer ? `DEFINER=${params.definer} ` : ''}TRIGGER \`${params.schema}\`.\`${params.name}\` ${params.activation} ${params.event} ON \`${params.table}\` FOR EACH ROW ${params.sql}`;
-      return await this.raw(sql, { split: false });
+      await this.raw(sql, { split: false });
    }
 
    /**
-    * SHOW CREATE PROCEDURE
     *
-    * @returns {Array.<Object>} view informations
+    *
+    * @param {{ schema: string, routine: string}} { schema, routine }
+    * @return {*}
     * @memberof MySQLClient
     */
-   async getRoutineInformations ({ schema, routine }) {
+   async getRoutineInformations ({ schema, routine }: { schema: string, routine: string}) {
       const sql = `SHOW CREATE PROCEDURE \`${schema}\`.\`${routine}\``;
-      const results = await this.raw(sql);
+      const results = <QueryResult> await this.raw(sql);
 
-      return results.rows.map(async row => {
+      return results?.rows?.map(async row => {
          if (!row['Create Procedure']) {
             return {
                definer: null,
@@ -774,9 +783,9 @@ export class MySQLClient extends AntaresCore {
                ORDER BY ORDINAL_POSITION
             `;
 
-         const results = await this.raw(sql);
+         const results = <QueryResult> await this.raw(sql);
 
-         const parameters = results.rows.map(row => {
+         const parameters = results?.rows?.map(row => {
             return {
                name: row.PARAMETER_NAME,
                type: row.DATA_TYPE.toUpperCase(),
@@ -807,14 +816,14 @@ export class MySQLClient extends AntaresCore {
    }
 
    /**
-    * DROP PROCEDURE
     *
-    * @returns {Array.<Object>} parameters
+    *
+    * @param {{ schema: string, routine: string}} params
     * @memberof MySQLClient
     */
-   async dropRoutine (params) {
+   async dropRoutine (params: { schema: string, routine: string}) {
       const sql = `DROP PROCEDURE \`${params.schema}\`.\`${params.routine}\``;
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
@@ -823,20 +832,15 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async alterRoutine (params) {
+   async alterRoutine (params: {routine: RoutineParams}) {
       const { routine } = params;
       const tempProcedure = Object.assign({}, routine);
       tempProcedure.name = `Antares_${tempProcedure.name}_tmp`;
 
-      try {
-         await this.createRoutine(tempProcedure);
-         await this.dropRoutine({ schema: routine.schema, routine: tempProcedure.name });
-         await this.dropRoutine({ schema: routine.schema, routine: routine.oldName });
-         await this.createRoutine(routine);
-      }
-      catch (err) {
-         return Promise.reject(err);
-      }
+      await this.createRoutine(tempProcedure);
+      await this.dropRoutine({ schema: routine.schema, routine: tempProcedure.name });
+      await this.dropRoutine({ schema: routine.schema, routine: routine.oldName });
+      await this.createRoutine(routine);
    }
 
    /**
@@ -845,9 +849,9 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async createRoutine (params) {
+   async createRoutine (params: RoutineParams) {
       const parameters = 'parameters' in params
-         ? params.parameters.reduce((acc, curr) => {
+         ? params.parameters.reduce((acc: Array<string>, curr) => {
             acc.push(`${curr.context} \`${curr.name}\` ${curr.type}${curr.length ? `(${curr.length})` : ''}`);
             return acc;
          }, []).join(',')
@@ -861,20 +865,21 @@ export class MySQLClient extends AntaresCore {
          COMMENT '${params.comment}'
          ${params.sql}`;
 
-      return await this.raw(sql, { split: false });
+      await this.raw(sql, { split: false });
    }
 
    /**
-    * SHOW CREATE FUNCTION
     *
-    * @returns {Array.<Object>} view informations
+    *
+    * @param {{ schema: string, func: string}} { schema, func }
+    * @return {*}
     * @memberof MySQLClient
     */
-   async getFunctionInformations ({ schema, func }) {
+   async getFunctionInformations ({ schema, func }: { schema: string, func: string}) {
       const sql = `SHOW CREATE FUNCTION \`${schema}\`.\`${func}\``;
-      const results = await this.raw(sql);
+      const results = <QueryResult> await this.raw(sql);
 
-      return results.rows.map(async row => {
+      return results?.rows?.map(async row => {
          if (!row['Create Function']) {
             return {
                definer: null,
@@ -897,9 +902,9 @@ export class MySQLClient extends AntaresCore {
             ORDER BY ORDINAL_POSITION
          `;
 
-         const results = await this.raw(sql);
+         const results = <QueryResult> await this.raw(sql);
 
-         const parameters = results.rows.filter(row => row.PARAMETER_MODE).map(row => {
+         const parameters = results?.rows?.filter(row => row.PARAMETER_MODE).map(row => {
             return {
                name: row.PARAMETER_NAME,
                type: row.DATA_TYPE.toUpperCase(),
@@ -934,36 +939,32 @@ export class MySQLClient extends AntaresCore {
    }
 
    /**
-    * DROP FUNCTION
     *
-    * @returns {Array.<Object>} parameters
+    *
+    * @param {{ schema: string, func: string}} params
     * @memberof MySQLClient
     */
-   async dropFunction (params) {
+   async dropFunction (params: { schema: string, func: string}) {
       const sql = `DROP FUNCTION \`${params.schema}\`.\`${params.func}\``;
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
-    * ALTER FUNCTION
     *
-    * @returns {Array.<Object>} parameters
+    *
+    * @param {{func: FunctionParams}} params
+    * @return {*}
     * @memberof MySQLClient
     */
-   async alterFunction (params) {
+   async alterFunction (params: {func: FunctionParams}) {
       const { func } = params;
       const tempProcedure = Object.assign({}, func);
       tempProcedure.name = `Antares_${tempProcedure.name}_tmp`;
 
-      try {
-         await this.createFunction(tempProcedure);
-         await this.dropFunction({ schema: func.schema, func: tempProcedure.name });
-         await this.dropFunction({ schema: func.schema, func: func.oldName });
-         await this.createFunction(func);
-      }
-      catch (err) {
-         return Promise.reject(err);
-      }
+      await this.createFunction(tempProcedure);
+      await this.dropFunction({ schema: func.schema, func: tempProcedure.name });
+      await this.dropFunction({ schema: func.schema, func: func.oldName });
+      await this.createFunction(func);
    }
 
    /**
@@ -972,8 +973,8 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async createFunction (params) {
-      const parameters = params.parameters.reduce((acc, curr) => {
+   async createFunction (params: FunctionParams) {
+      const parameters = params.parameters.reduce((acc: Array<string>, curr) => {
          acc.push(`\`${curr.name}\` ${curr.type}${curr.length ? `(${curr.length})` : ''}`);
          return acc;
       }, []).join(',');
@@ -988,7 +989,7 @@ export class MySQLClient extends AntaresCore {
          COMMENT '${params.comment}'
          ${body}`;
 
-      return await this.raw(sql, { split: false });
+      await this.raw(sql, { split: false });
    }
 
    /**
@@ -997,11 +998,11 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} view informations
     * @memberof MySQLClient
     */
-   async getEventInformations ({ schema, scheduler }) {
+   async getEventInformations ({ schema, scheduler }: { schema: string, scheduler: string}) {
       const sql = `SHOW CREATE EVENT \`${schema}\`.\`${scheduler}\``;
-      const results = await this.raw(sql);
+      const results = <QueryResult> await this.raw(sql);
 
-      return results.rows.map(row => {
+      return results?.rows?.map(row => {
          const schedule = row['Create Event'];
          const execution = schedule.includes('EVERY') ? 'EVERY' : 'ONCE';
          const every = execution === 'EVERY' ? row['Create Event'].match(/(?<=EVERY )(\s*([^\s]+)){0,2}/gs)[0].replaceAll('\'', '').split(' ') : [];
@@ -1031,9 +1032,9 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async dropEvent (params) {
+   async dropEvent (params:{ schema: string, scheduler: string}) {
       const sql = `DROP EVENT \`${params.schema}\`.\`${params.scheduler}\``;
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
@@ -1042,7 +1043,7 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async alterEvent (params) {
+   async alterEvent (params: {scheduler: SchedulerParams}) {
       const { scheduler } = params;
 
       if (scheduler.execution === 'EVERY' && scheduler.every[0].includes('-'))
@@ -1059,7 +1060,7 @@ export class MySQLClient extends AntaresCore {
       COMMENT '${scheduler.comment}'
       DO ${scheduler.sql}`;
 
-      return await this.raw(sql, { split: false });
+      await this.raw(sql, { split: false });
    }
 
    /**
@@ -1068,7 +1069,7 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async createEvent (params) {
+   async createEvent (params: SchedulerParams) {
       const sql = `CREATE ${params.definer ? ` DEFINER=${params.definer}` : ''} EVENT \`${params.schema}\`.\`${params.name}\` 
       ON SCHEDULE
          ${params.execution === 'EVERY'
@@ -1079,7 +1080,7 @@ export class MySQLClient extends AntaresCore {
       COMMENT '${params.comment}'
       DO ${params.sql}`;
 
-      return await this.raw(sql, { split: false });
+      await this.raw(sql, { split: false });
    }
 
    /**
@@ -1089,16 +1090,16 @@ export class MySQLClient extends AntaresCore {
     * @memberof MySQLClient
     */
    async getCollations () {
-      const results = await this.raw('SHOW COLLATION');
+      const results = <QueryResult> await this.raw('SHOW COLLATION');
 
-      return results.rows.map(row => {
+      return results?.rows?.map(row => {
          return {
-            charset: row.Charset,
-            collation: row.Collation,
-            compiled: row.Compiled.includes('Yes'),
-            default: row.Default.includes('Yes'),
-            id: row.Id,
-            sortLen: row.Sortlen
+            charset: <string> row.Charset,
+            collation: <string> row.Collation,
+            compiled: <string> row.Compiled.includes('Yes'),
+            default: <string> row.Default.includes('Yes'),
+            id: <number> row.Id,
+            sortLen: <number> row.Sortlen
          };
       });
    }
@@ -1111,50 +1112,50 @@ export class MySQLClient extends AntaresCore {
     */
    async getVariables () {
       const sql = 'SHOW VARIABLES';
-      const results = await this.raw(sql);
+      const results = <QueryResult> await this.raw(sql);
 
-      return results.rows.map(row => {
+      return results?.rows?.map(row => {
          return {
-            name: row.Variable_name,
-            value: row.Value
+            name: <string> row.Variable_name,
+            value: <string> row.Value
          };
       });
    }
 
    /**
-    * SHOW ENGINES
     *
-    * @returns {Array.<Object>} engines list
+    *
+    * @return {*}
     * @memberof MySQLClient
     */
    async getEngines () {
       const sql = 'SHOW ENGINES';
-      const results = await this.raw(sql);
+      const results = <QueryResult> await this.raw(sql);
 
-      return results.rows.map(row => {
+      return results?.rows?.map(row => {
          return {
-            name: row.Engine,
-            support: row.Support,
-            comment: row.Comment,
-            transactions: row.Transactions,
-            xa: row.XA,
-            savepoints: row.Savepoints,
-            isDefault: row.Support.includes('DEFAULT')
+            name: <string> row.Engine,
+            support: <string> row.Support,
+            comment: <string> row.Comment,
+            transactions: <string> row.Transactions,
+            xa: <string> row.XA,
+            savepoints: <string> row.Savepoints,
+            isDefault: <boolean> row.Support.includes('DEFAULT')
          };
       });
    }
 
    /**
-    * SHOW VARIABLES LIKE '%vers%'
     *
-    * @returns {Array.<Object>} version parameters
+    *
+    * @return {*}
     * @memberof MySQLClient
     */
    async getVersion () {
       const sql = 'SHOW VARIABLES LIKE "%vers%"';
-      const { rows } = await this.raw(sql);
+      const { rows } = <QueryResult> await this.raw(sql);
 
-      return rows.reduce((acc, curr) => {
+      return rows?.reduce((acc: {[key: string]: string}, curr) => {
          switch (curr.Variable_name) {
             case 'version':
                acc.number = curr.Value.split('-')[0];
@@ -1173,21 +1174,27 @@ export class MySQLClient extends AntaresCore {
       }, {});
    }
 
+   /**
+    *
+    *
+    * @return {*}
+    * @memberof MySQLClient
+    */
    async getProcesses () {
       const sql = 'SELECT `ID`, `USER`, `HOST`, `DB`, `COMMAND`, `TIME`, `STATE`, LEFT(`INFO`, 51200) AS `INFO` FROM `information_schema`.`PROCESSLIST`';
 
-      const { rows } = await this.raw(sql);
+      const { rows } = <QueryResult> await this.raw(sql);
 
-      return rows.map(row => {
+      return rows?.map(row => {
          return {
-            id: row.ID,
-            user: row.USER,
+            id: <number> row.ID,
+            user: <string> row.USER,
             host: row.HOST,
-            db: row.DB,
-            command: row.COMMAND,
-            time: row.TIME,
-            state: row.STATE,
-            info: row.INFO
+            database: <string> row.DB,
+            command: <string> row.COMMAND,
+            time: <number> row.TIME,
+            state: <string> row.STATE,
+            info: <string> row.INFO
          };
       });
    }
@@ -1198,7 +1205,7 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async createTable (params) {
+   async createTable (params: TableParams) {
       const {
          schema,
          fields,
@@ -1206,9 +1213,9 @@ export class MySQLClient extends AntaresCore {
          indexes,
          options
       } = params;
-      const newColumns = [];
-      const newIndexes = [];
-      const newForeigns = [];
+      const newColumns: Array<string> = [];
+      const newIndexes: Array<string> = [];
+      const newForeigns: Array<string> = [];
 
       let sql = `CREATE TABLE \`${schema}\`.\`${options.name}\``;
 
@@ -1251,7 +1258,7 @@ export class MySQLClient extends AntaresCore {
 
       sql = `${sql} (${[...newColumns, ...newIndexes, ...newForeigns].join(', ')}) COMMENT='${options.comment}', COLLATE='${options.collation}', ENGINE=${options.engine}`;
 
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
@@ -1260,7 +1267,7 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async alterTable (params) {
+   async alterTable (params: TableParams) {
       const {
          table,
          schema,
@@ -1278,11 +1285,11 @@ export class MySQLClient extends AntaresCore {
       // OPTIONS
       if ('comment' in options) alterColumns.push(`COMMENT='${options.comment}'`);
       if ('engine' in options) alterColumns.push(`ENGINE=${options.engine}`);
-      if ('autoIncrement' in options) alterColumns.push(`AUTO_INCREMENT=${+options.autoIncrement}`);
+      if ('autoIncrement' in options) alterColumns.push(`AUTO_INCREMENT=${options.autoIncrement}`);
       if ('collation' in options) alterColumns.push(`COLLATE='${options.collation}'`);
 
       // ADD FIELDS
-      additions.forEach(addition => {
+      additions?.forEach(addition => {
          const typeInfo = this._getTypeInfo(addition.type);
          const length = typeInfo.length ? addition.enumValues || addition.numLength || addition.charLength || addition.datePrecision : false;
 
@@ -1320,7 +1327,7 @@ export class MySQLClient extends AntaresCore {
       });
 
       // CHANGE FIELDS
-      changes.forEach(change => {
+      changes?.forEach(change => {
          const typeInfo = this._getTypeInfo(change.type);
          const length = typeInfo.length ? change.enumValues || change.numLength || change.charLength || change.datePrecision : false;
 
@@ -1364,7 +1371,7 @@ export class MySQLClient extends AntaresCore {
       });
 
       // DROP FIELDS
-      deletions.forEach(deletion => {
+      deletions?.forEach(deletion => {
          alterColumns.push(`DROP COLUMN \`${deletion.name}\``);
       });
 
@@ -1377,7 +1384,7 @@ export class MySQLClient extends AntaresCore {
       });
 
       // DROP FOREIGN KEYS
-      foreignChanges.deletions.forEach(deletion => {
+      foreignChanges?.deletions.forEach(deletion => {
          alterColumns.push(`DROP FOREIGN KEY \`${deletion.constraintName}\``);
       });
 
@@ -1386,7 +1393,7 @@ export class MySQLClient extends AntaresCore {
       // RENAME
       if (options.name) sql += `; RENAME TABLE \`${schema}\`.\`${table}\` TO \`${schema}\`.\`${options.name}\``;
 
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
@@ -1395,9 +1402,9 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async duplicateTable (params) {
+   async duplicateTable (params: { schema: string, table: string}) {
       const sql = `CREATE TABLE \`${params.schema}\`.\`${params.table}_copy\` LIKE \`${params.schema}\`.\`${params.table}\``;
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
@@ -1406,9 +1413,9 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async truncateTable (params) {
+   async truncateTable (params: { schema: string, table: string}) {
       const sql = `TRUNCATE TABLE \`${params.schema}\`.\`${params.table}\``;
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
@@ -1417,9 +1424,9 @@ export class MySQLClient extends AntaresCore {
     * @returns {Array.<Object>} parameters
     * @memberof MySQLClient
     */
-   async dropTable (params) {
+   async dropTable (params: {schema: string, table: string}) {
       const sql = `DROP TABLE \`${params.schema}\`.\`${params.table}\``;
-      return await this.raw(sql);
+      await this.raw(sql);
    }
 
    /**
@@ -1490,7 +1497,7 @@ export class MySQLClient extends AntaresCore {
     * @returns {Promise}
     * @memberof MySQLClient
     */
-   async raw (sql: string, args?: Array<QueryArguments>) {
+   async raw (sql: string, args?: QueryArguments): Promise<QueryResult|Array<QueryResult>> {
       if (!this._connection) throw new Error('No connection available');
 
       if (process.env.NODE_ENV === 'development') this._logger(sql);// TODO: replace BLOB content with a placeholder
@@ -1507,7 +1514,7 @@ export class MySQLClient extends AntaresCore {
          sql = sql.replace(/(\/\*(.|[\r\n])*?\*\/)|(--(.*|[\r\n]))/gm, '');// Remove comments
 
       const nestTables = internalArgs.nest ? '.' : false;
-      const resultsArr = [];
+      const resultsArr: Array<QueryResult> = [];
       let paramsArr = [];
       const queries = internalArgs.split
          ? sql.split(/((?:[^;'"]*(?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*')[^;'"]*)+)|;/gm)
@@ -1524,32 +1531,34 @@ export class MySQLClient extends AntaresCore {
          if (!query) continue;
          const timeStart = new Date();
          let timeStop;
-         let keysArr = [];
+         let keysArr: Array<{[key:string]: number|string}> = [];
+         type ExcludesFalse = <T>(x: T | false) => x is T;
 
          const { rows, report, fields, keys, duration } = await new Promise((resolve, reject) => {
             connection.query({ sql: query, nestTables }).then(async ([response, fields]) => {
                timeStop = new Date();
                const queryResult = response;
 
-               let remappedFields = fields
+               let remappedFields: Array<{[key:string]: number|string|boolean|null}> = fields
                   ? fields.map(field => {
                      if (!field || Array.isArray(field))
                         return false;
 
                      const type = this._getType(field);
-
-                     return {
+                     const fieldPacket: {[key:string]: number|string|boolean} = {
                         name: field.orgName,
                         alias: field.name,
                         orgName: field.orgName,
-                        schema: internalArgs.schema || field.schema,
+                        schema: internalArgs.schema || '',
                         table: field.table,
                         tableAlias: field.table,
                         orgTable: field.orgTable,
                         type: type.name,
                         length: type.length
                      };
-                  }).filter(Boolean)
+
+                     return fieldPacket;
+                  }).filter(Boolean as any as ExcludesFalse)
                   : [];
 
                if (internalArgs.details) {
@@ -1557,20 +1566,21 @@ export class MySQLClient extends AntaresCore {
 
                   if (remappedFields.length) {
                      paramsArr = remappedFields.map(field => {
-                        if (field.orgTable) cachedTable = field.orgTable;// Needed for some queries on information_schema
+                        if (field && field.orgTable)
+                           cachedTable = (field.orgTable as string);// Needed for some queries on information_schema
                         return {
                            table: field.orgTable || cachedTable,
                            schema: field.schema || 'INFORMATION_SCHEMA'
                         };
                      }).filter((val, i, arr) => arr.findIndex(el => el.schema === val.schema && el.table === val.table) === i);
 
-                     for (const paramObj of paramsArr) {
+                     for (const paramObj of (paramsArr as Array<{table: string, schema: string}>)) {
                         if (!paramObj.table || !paramObj.schema) continue;
 
                         try { // Column details
                            const response = await this.getTableColumns(paramObj);
                            remappedFields = remappedFields.map(field => {
-                              const detailedField = response.find(f => f.name === field.name);
+                              const detailedField = response?.find(f => f.name === field.name);
                               if (detailedField && field.orgTable === paramObj.table && field.schema === paramObj.schema)
                                  field = { ...field, ...detailedField };
                               return field;
@@ -1588,7 +1598,7 @@ export class MySQLClient extends AntaresCore {
                         }
                         catch (err) {
                            if (isPool)
-                              (connection as mysql.Pool).release();
+                              (connection as any).release();
                            reject(err);
                         }
                      }
@@ -1596,14 +1606,15 @@ export class MySQLClient extends AntaresCore {
                }
 
                resolve({
-                  duration: timeStop - timeStart,
+                  duration: +timeStop - +timeStart,
                   rows: Array.isArray(queryResult) ? queryResult.some(el => Array.isArray(el)) ? [] : queryResult : false,
                   report: !Array.isArray(queryResult) ? queryResult : false,
                   fields: remappedFields,
                   keys: keysArr
                });
             }).catch((err) => {
-               if (isPool) connection.release();
+               if (isPool)
+                  (connection as any).release();
                reject(err);
             });
          });
@@ -1611,7 +1622,8 @@ export class MySQLClient extends AntaresCore {
          resultsArr.push({ rows, report, fields, keys, duration });
       }
 
-      if (isPool) connection.release();
+      if (isPool)
+         (connection as any).release();
 
       return resultsArr.length === 1 ? resultsArr[0] : resultsArr;
    }

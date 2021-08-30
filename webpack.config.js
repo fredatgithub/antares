@@ -1,7 +1,9 @@
 const webpack = require('webpack');
+const path = require('path');
 
 module.exports = {
    stats: 'errors-warnings',
+   entry: path.resolve('src/main', 'index.ts'),
    plugins: [
       new webpack.DefinePlugin({
          'process.env': {
@@ -12,8 +14,8 @@ module.exports = {
    module: {
       rules: [
          {
-            test: /\.(ts|tsx)$/,
-            exclude: /node_modules/,
+            test: /\.ts$/,
+            exclude: 'node_modules',
             use: {
                loader: 'ts-loader'
             }

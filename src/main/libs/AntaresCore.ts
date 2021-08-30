@@ -1,3 +1,4 @@
+import { Core } from '../interfaces/Core';
 import { ConnectionArguments, QueryObject, QueryArguments } from '../interfaces/misc';
 
 /**
@@ -5,8 +6,8 @@ import { ConnectionArguments, QueryObject, QueryArguments } from '../interfaces/
  *
  * @class AntaresCore
  */
-export class AntaresCore {
-   protected _client: string;
+export class AntaresCore implements Core {
+   _client: string;
    protected _params;
    protected _poolSize: number | false;
    protected _logger: Function;
@@ -92,7 +93,7 @@ export class AntaresCore {
       return this;
    }
 
-   where (...args: Array<string>) {
+   where (...args: Array<string | {[key: string]: string}>) {
       this._query.where = [...this._query.where, ...args];
       return this;
    }
@@ -102,17 +103,17 @@ export class AntaresCore {
       return this;
    }
 
-   orderBy (...args: Array<string>) {
+   orderBy (...args: Array<string | {[key: string]: string}>) {
       this._query.orderBy = [...this._query.orderBy, ...args];
       return this;
    }
 
-   limit (...args: Array<string>) {
+   limit (...args: Array<number>) {
       this._query.limit = args;
       return this;
    }
 
-   offset (...args: Array<string>) {
+   offset (...args: Array<number>) {
       this._query.offset = args;
       return this;
    }
@@ -142,13 +143,13 @@ export class AntaresCore {
     * @returns {Promise}
     * @memberof AntaresCore
     */
-   run (args: Array<QueryArguments>) {
+   async run (args?: QueryArguments) {
       const rawQuery = this.getSQL();
       this._resetQuery();
       return this.raw(rawQuery, args);
    }
 
-   raw (query: string, args?: Array<QueryArguments>): Promise<any> | void {}
+   raw (query: string, args?: QueryArguments): Promise<any> | void {}
 
    getSQL (): string {
       return '';

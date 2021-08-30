@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron';
+import { ClientClass } from '../interfaces/ClientClass';
 
-export default (connections) => {
+export default (connections: {[key: string]: ClientClass}) => {
    ipcMain.handle('get-trigger-informations', async (event, params) => {
       try {
          const result = await connections[params.uid].getTriggerInformations(params);

@@ -1,10 +1,12 @@
 import fs from 'fs';
 import { ipcMain } from 'electron';
 import { ClientsFactory } from '../libs/ClientsFactory';
+import { ConnectionConfig } from '../interfaces/misc';
+import { ClientClass } from '../interfaces/ClientClass';
 
-export default connections => {
-   ipcMain.handle('test-connection', async (event, conn) => {
-      const params = {
+export default (connections: {[key: string]: ClientClass}) => {
+   ipcMain.handle('test-connection', async (event, conn: any) => {
+      const params: ConnectionConfig = {
          host: conn.host,
          port: +conn.port,
          user: conn.user,
@@ -26,17 +28,17 @@ export default connections => {
 
       if (conn.ssh) {
          params.ssh = {
-            host: conn.sshHost,
-            username: conn.sshUser,
-            password: conn.sshPass,
-            port: conn.sshPort ? conn.sshPort : 22,
+            host: <string> conn.sshHost,
+            username: <string> conn.sshUser,
+            password: <string> conn.sshPass,
+            port: conn.sshPort ? +conn.sshPort : 22,
             identity: conn.sshKey
          };
       }
 
       try {
          const connection = await ClientsFactory.getConnection({
-            client: conn.client,
+            client: <string> conn.client,
             params
          });
          await connection.connect();
@@ -56,7 +58,7 @@ export default connections => {
    });
 
    ipcMain.handle('connect', async (event, conn) => {
-      const params = {
+      const params: ConnectionConfig = {
          host: conn.host,
          port: +conn.port,
          user: conn.user,

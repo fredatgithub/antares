@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron';
+import { ClientClass } from '../interfaces/ClientClass';
 
-export default (connections) => {
+export default (connections: {[key: string]: ClientClass}) => {
    ipcMain.handle('get-function-informations', async (event, params) => {
       try {
          const result = await connections[params.uid].getFunctionInformations(params);
@@ -33,7 +34,7 @@ export default (connections) => {
 
    ipcMain.handle('alter-trigger-function', async (event, params) => {
       try {
-         await connections[params.uid].alterTriggerFunction(params);
+         await (connections[params.uid] as any).alterTriggerFunction(params);
          return { status: 'success' };
       }
       catch (err) {
@@ -53,7 +54,7 @@ export default (connections) => {
 
    ipcMain.handle('create-trigger-function', async (event, params) => {
       try {
-         await connections[params.uid].createTriggerFunction(params);
+         await (connections[params.uid] as any).createTriggerFunction(params);
          return { status: 'success' };
       }
       catch (err) {

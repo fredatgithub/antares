@@ -1,11 +1,12 @@
 import { ipcMain } from 'electron';
+import fs from 'fs';
 import faker from 'faker';
 import moment from 'moment';
-import { sqlEscaper } from 'common/libs/sqlEscaper';
-import { TEXT, LONG_TEXT, ARRAY, TEXT_SEARCH, NUMBER, FLOAT, BLOB, BIT, DATE, DATETIME } from 'common/fieldTypes';
-import fs from 'fs';
+import { sqlEscaper } from '../../common/libs/sqlEscaper.js';
+import { TEXT, LONG_TEXT, ARRAY, TEXT_SEARCH, NUMBER, FLOAT, BLOB, BIT, DATE, DATETIME } from '../../common/fieldTypes.js';
+import { ClientClass } from '../interfaces/ClientClass';
 
-export default (connections) => {
+export default (connections: {[key: string]: ClientClass}) => {
    ipcMain.handle('get-table-columns', async (event, params) => {
       try {
          const result = await connections[params.uid].getTableColumns(params);
@@ -181,7 +182,7 @@ export default (connections) => {
 
    ipcMain.handle('delete-table-rows', async (event, params) => {
       if (params.primary) {
-         const idString = params.rows.map(row => {
+         const idString = params.rows.map((row: any) => {
             const fieldName = Object.keys(row)[0].includes('.') ? `${params.table}.${params.primary}` : params.primary;
 
             return typeof row[fieldName] === 'string'
@@ -230,7 +231,7 @@ export default (connections) => {
 
    ipcMain.handle('insert-table-rows', async (event, params) => {
       try { // TODO: move to client classes
-         const insertObj = {};
+         const insertObj: any = {};
          for (const key in params.row) {
             const type = params.fields[key];
             let escapedParam;
@@ -302,7 +303,7 @@ export default (connections) => {
          const rows = [];
 
          for (let i = 0; i < +params.repeat; i++) {
-            const insertObj = {};
+            const insertObj: any = {};
 
             for (const key in params.row) {
                const type = params.fields[key];
@@ -360,8 +361,8 @@ export default (connections) => {
                   insertObj[key] = escapedParam;
                }
                else { // Faker value
-                  const parsedParams = {};
-                  let fakeValue;
+                  const parsedParams: any = {};
+                  let fakeValue: any;
 
                   if (params.locale)
                      faker.locale = params.locale;
@@ -371,10 +372,10 @@ export default (connections) => {
                         if (!isNaN(params.row[key].params[param]))
                            parsedParams[param] = +params.row[key].params[param];
                      });
-                     fakeValue = faker[params.row[key].group][params.row[key].method](parsedParams);
+                     fakeValue = (faker as any)[params.row[key].group][params.row[key].method](parsedParams);
                   }
                   else
-                     fakeValue = faker[params.row[key].group][params.row[key].method]();
+                     fakeValue = (faker as any)[params.row[key].group][params.row[key].method]();
 
                   if (typeof fakeValue === 'string') {
                      if (params.row[key].length)

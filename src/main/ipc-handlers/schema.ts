@@ -1,7 +1,8 @@
 
 import { ipcMain } from 'electron';
+import { ClientClass } from '../interfaces/ClientClass';
 
-export default connections => {
+export default (connections: {[key: string]: ClientClass}) => {
    ipcMain.handle('create-schema', async (event, params) => {
       try {
          await connections[params.uid].createSchema(params);
@@ -37,7 +38,7 @@ export default connections => {
 
    ipcMain.handle('get-schema-collation', async (event, params) => {
       try {
-         const collation = await connections[params.uid].getDatabaseCollation(params);
+         const collation = await (connections[params.uid] as any).getDatabaseCollation(params);
 
          return { status: 'success', response: collation.rows.length ? collation.rows[0].DEFAULT_COLLATION_NAME : '' };
       }
@@ -59,7 +60,7 @@ export default connections => {
 
    ipcMain.handle('get-collations', async (event, uid) => {
       try {
-         const result = await connections[uid].getCollations();
+         const result = await (connections[uid] as any).getCollations();
 
          return { status: 'success', response: result };
       }

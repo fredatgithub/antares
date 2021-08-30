@@ -1,5 +1,6 @@
 import { app, BrowserWindow, /* session, */ nativeImage, Menu } from 'electron';
 import * as path from 'path';
+import { URL } from 'url';
 import Store from 'electron-store';
 
 import ipcHandlers from './ipc-handlers';
