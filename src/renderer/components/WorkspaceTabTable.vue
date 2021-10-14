@@ -81,24 +81,17 @@
                   <span>{{ $t('message.tableFiller') }}</span>
                </button>
 
-               <div class="dropdown table-dropdown pr-2">
+               <div class="pr-2">
                   <button
                      :disabled="isQuering"
                      class="btn btn-dark btn-sm dropdown-toggle mr-0 pr-0"
                      tabindex="0"
+                     @click="showExportModal"
                   >
                      <i class="mdi mdi-24px mdi-file-export mr-1" />
                      <span>{{ $t('word.export') }}</span>
                      <i class="mdi mdi-24px mdi-menu-down" />
                   </button>
-                  <ul class="menu text-left">
-                     <li class="menu-item">
-                        <a class="c-hand" @click="downloadTable('json')">JSON</a>
-                     </li>
-                     <li class="menu-item">
-                        <a class="c-hand" @click="downloadTable('csv')">CSV</a>
-                     </li>
-                  </ul>
                </div>
             </div>
             <div class="workspace-query-info">
@@ -153,6 +146,14 @@
          @hide="hideFakerModal"
          @reload="reloadTable"
       />
+      <ModalExport
+         v-if="isExportModal"
+         :connection="connection"
+         :schema="schema"
+         :table="table"
+         @close="hideExportModal"
+         @reload="reloadTable"
+      />
    </div>
 </template>
 
@@ -162,6 +163,7 @@ import BaseLoader from '@/components/BaseLoader';
 import WorkspaceTabQueryTable from '@/components/WorkspaceTabQueryTable';
 import ModalNewTableRow from '@/components/ModalNewTableRow';
 import ModalFakerRows from '@/components/ModalFakerRows';
+import ModalExport from '@/components/ModalExport';
 import { mapGetters, mapActions } from 'vuex';
 import tableTabs from '@/mixins/tableTabs';
 
@@ -171,7 +173,8 @@ export default {
       BaseLoader,
       WorkspaceTabQueryTable,
       ModalNewTableRow,
-      ModalFakerRows
+      ModalFakerRows,
+      ModalExport
    },
    filters: {
       localeString (val) {
@@ -196,6 +199,7 @@ export default {
          lastTable: null,
          isAddModal: false,
          isFakerModal: false,
+         isExportModal: false,
          autorefreshTimer: 0,
          refreshInterval: null,
          sortParams: {},
@@ -382,6 +386,15 @@ export default {
       },
       hideFakerModal () {
          this.isFakerModal = false;
+      },
+      showExportModal () {
+         console.log('bla');
+         if (this.isQuering) return;
+         this.isExportModal = true;
+         console.log(this.isExportModal);
+      },
+      hideExportModal () {
+         this.isExportModal = false;
       },
       onKey (e) {
          if (this.isSelected) {
