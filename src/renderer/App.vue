@@ -30,15 +30,15 @@ import { Menu, getCurrentWindow } from '@electron/remote';
 export default {
    name: 'App',
    components: {
-      TheTitleBar: () => import(/* webpackChunkName: "TheTitleBar" */'@/components/TheTitleBar'),
-      TheSettingBar: () => import(/* webpackChunkName: "TheSettingBar" */'@/components/TheSettingBar'),
-      TheFooter: () => import(/* webpackChunkName: "TheFooter" */'@/components/TheFooter'),
-      TheNotificationsBoard: () => import(/* webpackChunkName: "TheNotificationsBoard" */'@/components/TheNotificationsBoard'),
-      Workspace: () => import(/* webpackChunkName: "Workspace" */'@/components/Workspace'),
-      WorkspaceAddConnectionPanel: () => import(/* webpackChunkName: "WorkspaceAddConnectionPanel" */'@/components/WorkspaceAddConnectionPanel'),
-      ModalSettings: () => import(/* webpackChunkName: "ModalSettings" */'@/components/ModalSettings'),
-      TheScratchpad: () => import(/* webpackChunkName: "TheScratchpad" */'@/components/TheScratchpad'),
-      BaseTextEditor: () => import(/* webpackChunkName: "BaseTextEditor" */'@/components/BaseTextEditor')
+      TheTitleBar: () => import(/* webpackChunkName: "TheTitleBar" */'@/components/TheTitleBar.vue'),
+      TheSettingBar: () => import(/* webpackChunkName: "TheSettingBar" */'@/components/TheSettingBar.vue'),
+      TheFooter: () => import(/* webpackChunkName: "TheFooter" */'@/components/TheFooter.vue'),
+      TheNotificationsBoard: () => import(/* webpackChunkName: "TheNotificationsBoard" */'@/components/TheNotificationsBoard.vue'),
+      Workspace: () => import(/* webpackChunkName: "Workspace" */'@/components/Workspace.vue'),
+      WorkspaceAddConnectionPanel: () => import(/* webpackChunkName: "WorkspaceAddConnectionPanel" */'@/components/WorkspaceAddConnectionPanel.vue'),
+      ModalSettings: () => import(/* webpackChunkName: "ModalSettings" */'@/components/ModalSettings.vue'),
+      TheScratchpad: () => import(/* webpackChunkName: "TheScratchpad" */'@/components/TheScratchpad.vue'),
+      BaseTextEditor: () => import(/* webpackChunkName: "BaseTextEditor" */'@/components/BaseTextEditor.vue')
    },
    data () {
       return {};

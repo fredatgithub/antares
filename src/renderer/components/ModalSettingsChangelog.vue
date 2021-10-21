@@ -17,7 +17,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import marked from 'marked';
-import BaseLoader from '@/components/BaseLoader';
+import BaseLoader from '@/components/BaseLoader.vue';
 
 export default {
    name: 'ModalSettingsChangelog',

@@ -173,7 +173,7 @@
 
 <script>
 import { uidGen } from 'common/libs/uidGen';
-import ConfirmModal from '@/components/BaseConfirmModal';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
 
 export default {
    name: 'WorkspaceTabPropsRoutineParamsModal',

@@ -107,8 +107,8 @@
 <script>
 import { VueMaskDirective } from 'v-mask';
 import { TEXT, LONG_TEXT, NUMBER, FLOAT, DATE, TIME, DATETIME, BLOB, BIT } from 'common/fieldTypes';
-import BaseUploadInput from '@/components/BaseUploadInput';
-import ForeignKeySelect from '@/components/ForeignKeySelect';
+import BaseUploadInput from '@/components/BaseUploadInput.vue';
+import ForeignKeySelect from '@/components/ForeignKeySelect.vue';
 import FakerMethods from 'common/FakerMethods';
 
 export default {

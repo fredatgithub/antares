@@ -459,29 +459,29 @@
 import { mapGetters, mapActions } from 'vuex';
 import Draggable from 'vuedraggable';
 import Connection from '@/ipc-api/Connection';
-import WorkspaceEmptyState from '@/components/WorkspaceEmptyState';
-import WorkspaceExploreBar from '@/components/WorkspaceExploreBar';
-import WorkspaceEditConnectionPanel from '@/components/WorkspaceEditConnectionPanel';
-import WorkspaceTabQuery from '@/components/WorkspaceTabQuery';
-import WorkspaceTabTable from '@/components/WorkspaceTabTable';
+import WorkspaceEmptyState from '@/components/WorkspaceEmptyState.vue';
+import WorkspaceExploreBar from '@/components/WorkspaceExploreBar.vue';
+import WorkspaceEditConnectionPanel from '@/components/WorkspaceEditConnectionPanel.vue';
+import WorkspaceTabQuery from '@/components/WorkspaceTabQuery.vue';
+import WorkspaceTabTable from '@/components/WorkspaceTabTable.vue';
 
-import WorkspaceTabNewTable from '@/components/WorkspaceTabNewTable';
-import WorkspaceTabNewView from '@/components/WorkspaceTabNewView';
-import WorkspaceTabNewTrigger from '@/components/WorkspaceTabNewTrigger';
-import WorkspaceTabNewRoutine from '@/components/WorkspaceTabNewRoutine';
-import WorkspaceTabNewFunction from '@/components/WorkspaceTabNewFunction';
-import WorkspaceTabNewScheduler from '@/components/WorkspaceTabNewScheduler';
-import WorkspaceTabNewTriggerFunction from '@/components/WorkspaceTabNewTriggerFunction';
+import WorkspaceTabNewTable from '@/components/WorkspaceTabNewTable.vue';
+import WorkspaceTabNewView from '@/components/WorkspaceTabNewView.vue';
+import WorkspaceTabNewTrigger from '@/components/WorkspaceTabNewTrigger.vue';
+import WorkspaceTabNewRoutine from '@/components/WorkspaceTabNewRoutine.vue';
+import WorkspaceTabNewFunction from '@/components/WorkspaceTabNewFunction.vue';
+import WorkspaceTabNewScheduler from '@/components/WorkspaceTabNewScheduler.vue';
+import WorkspaceTabNewTriggerFunction from '@/components/WorkspaceTabNewTriggerFunction.vue';
 
-import WorkspaceTabPropsTable from '@/components/WorkspaceTabPropsTable';
-import WorkspaceTabPropsView from '@/components/WorkspaceTabPropsView';
-import WorkspaceTabPropsTrigger from '@/components/WorkspaceTabPropsTrigger';
-import WorkspaceTabPropsTriggerFunction from '@/components/WorkspaceTabPropsTriggerFunction';
-import WorkspaceTabPropsRoutine from '@/components/WorkspaceTabPropsRoutine';
-import WorkspaceTabPropsFunction from '@/components/WorkspaceTabPropsFunction';
-import WorkspaceTabPropsScheduler from '@/components/WorkspaceTabPropsScheduler';
-import ModalProcessesList from '@/components/ModalProcessesList';
-import ModalDiscardChanges from '@/components/ModalDiscardChanges';
+import WorkspaceTabPropsTable from '@/components/WorkspaceTabPropsTable.vue';
+import WorkspaceTabPropsView from '@/components/WorkspaceTabPropsView.vue';
+import WorkspaceTabPropsTrigger from '@/components/WorkspaceTabPropsTrigger.vue';
+import WorkspaceTabPropsTriggerFunction from '@/components/WorkspaceTabPropsTriggerFunction.vue';
+import WorkspaceTabPropsRoutine from '@/components/WorkspaceTabPropsRoutine.vue';
+import WorkspaceTabPropsFunction from '@/components/WorkspaceTabPropsFunction.vue';
+import WorkspaceTabPropsScheduler from '@/components/WorkspaceTabPropsScheduler.vue';
+import ModalProcessesList from '@/components/ModalProcessesList.vue';
+import ModalDiscardChanges from '@/components/ModalDiscardChanges.vue';
 
 export default {
    name: 'Workspace',

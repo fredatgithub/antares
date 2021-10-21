@@ -30,8 +30,8 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
-import ConfirmModal from '@/components/BaseConfirmModal';
-import TextEditor from '@/components/BaseTextEditor';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
+import TextEditor from '@/components/BaseTextEditor.vue';
 
 export default {
    name: 'TheScratchpad',

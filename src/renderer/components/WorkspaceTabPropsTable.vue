@@ -180,10 +180,10 @@
 import { mapGetters, mapActions } from 'vuex';
 import { uidGen } from 'common/libs/uidGen';
 import Tables from '@/ipc-api/Tables';
-import BaseLoader from '@/components/BaseLoader';
-import WorkspaceTabPropsTableFields from '@/components/WorkspaceTabPropsTableFields';
-import WorkspaceTabPropsTableIndexesModal from '@/components/WorkspaceTabPropsTableIndexesModal';
-import WorkspaceTabPropsTableForeignModal from '@/components/WorkspaceTabPropsTableForeignModal';
+import BaseLoader from '@/components/BaseLoader.vue';
+import WorkspaceTabPropsTableFields from '@/components/WorkspaceTabPropsTableFields.vue';
+import WorkspaceTabPropsTableIndexesModal from '@/components/WorkspaceTabPropsTableIndexesModal.vue';
+import WorkspaceTabPropsTableForeignModal from '@/components/WorkspaceTabPropsTableForeignModal.vue';
 
 export default {
    name: 'WorkspaceTabPropsTable',

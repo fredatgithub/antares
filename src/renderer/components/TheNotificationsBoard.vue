@@ -18,7 +18,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import BaseNotification from '@/components/BaseNotification';
+import BaseNotification from '@/components/BaseNotification.vue';
 
 export default {
    name: 'TheNotificationsBoard',

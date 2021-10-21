@@ -42,9 +42,9 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import BaseContextMenu from '@/components/BaseContextMenu';
-import ConfirmModal from '@/components/BaseConfirmModal';
-import ModalAskParameters from '@/components/ModalAskParameters';
+import BaseContextMenu from '@/components/BaseContextMenu.vue';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
+import ModalAskParameters from '@/components/ModalAskParameters.vue';
 import Triggers from '@/ipc-api/Triggers';
 import Routines from '@/ipc-api/Routines';
 import Functions from '@/ipc-api/Functions';

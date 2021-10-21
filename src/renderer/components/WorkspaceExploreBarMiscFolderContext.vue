@@ -43,7 +43,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import BaseContextMenu from '@/components/BaseContextMenu';
+import BaseContextMenu from '@/components/BaseContextMenu.vue';
 
 export default {
    name: 'WorkspaceExploreBarMiscContext',

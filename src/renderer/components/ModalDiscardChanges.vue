@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import ConfirmModal from '@/components/BaseConfirmModal';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
 
 export default {
    name: 'ModalDiscardChanges',

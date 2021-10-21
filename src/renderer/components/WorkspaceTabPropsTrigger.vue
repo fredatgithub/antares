@@ -131,9 +131,9 @@
 </template>
 
 <script>
-import QueryEditor from '@/components/QueryEditor';
+import QueryEditor from '@/components/QueryEditor.vue';
 import { mapGetters, mapActions } from 'vuex';
-import BaseLoader from '@/components/BaseLoader';
+import BaseLoader from '@/components/BaseLoader.vue';
 import Triggers from '@/ipc-api/Triggers';
 
 export default {

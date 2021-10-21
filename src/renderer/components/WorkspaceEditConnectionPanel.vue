@@ -358,10 +358,10 @@
 
 <script>
 import { mapActions } from 'vuex';
-import customizations from 'common/customizations';
+import * as customizations from 'common/customizations';
 import Connection from '@/ipc-api/Connection';
-import ModalAskCredentials from '@/components/ModalAskCredentials';
-import BaseUploadInput from '@/components/BaseUploadInput';
+import ModalAskCredentials from '@/components/ModalAskCredentials.vue';
+import BaseUploadInput from '@/components/BaseUploadInput.vue';
 
 export default {
    name: 'WorkspaceEditConnectionPanel',

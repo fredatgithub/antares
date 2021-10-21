@@ -195,9 +195,9 @@ import { bufferToBase64 } from 'common/libs/bufferToBase64';
 import hexToBinary from 'common/libs/hexToBinary';
 import { TEXT, LONG_TEXT, ARRAY, TEXT_SEARCH, NUMBER, FLOAT, BOOLEAN, DATE, TIME, DATETIME, BLOB, BIT, HAS_TIMEZONE } from 'common/fieldTypes';
 import { VueMaskDirective } from 'v-mask';
-import ConfirmModal from '@/components/BaseConfirmModal';
-import TextEditor from '@/components/BaseTextEditor';
-import ForeignKeySelect from '@/components/ForeignKeySelect';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
+import TextEditor from '@/components/BaseTextEditor.vue';
+import ForeignKeySelect from '@/components/ForeignKeySelect.vue';
 
 export default {
    name: 'WorkspaceTabQueryTableRow',

@@ -121,12 +121,12 @@ import Views from '@/ipc-api/Views';
 import Functions from '@/ipc-api/Functions';
 import Schedulers from '@/ipc-api/Schedulers';
 
-import WorkspaceExploreBarSchema from '@/components/WorkspaceExploreBarSchema';
-import DatabaseContext from '@/components/WorkspaceExploreBarSchemaContext';
-import TableContext from '@/components/WorkspaceExploreBarTableContext';
-import MiscContext from '@/components/WorkspaceExploreBarMiscContext';
-import MiscFolderContext from '@/components/WorkspaceExploreBarMiscFolderContext';
-import ModalNewSchema from '@/components/ModalNewSchema';
+import WorkspaceExploreBarSchema from '@/components/WorkspaceExploreBarSchema.vue';
+import DatabaseContext from '@/components/WorkspaceExploreBarSchemaContext.vue';
+import TableContext from '@/components/WorkspaceExploreBarTableContext.vue';
+import MiscContext from '@/components/WorkspaceExploreBarMiscContext.vue';
+import MiscFolderContext from '@/components/WorkspaceExploreBarMiscFolderContext.vue';
+import ModalNewSchema from '@/components/ModalNewSchema.vue';
 
 export default {
    name: 'WorkspaceExploreBar',

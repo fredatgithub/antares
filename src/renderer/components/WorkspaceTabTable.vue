@@ -172,11 +172,11 @@
 
 <script>
 import Tables from '@/ipc-api/Tables';
-import BaseLoader from '@/components/BaseLoader';
-import WorkspaceTabQueryTable from '@/components/WorkspaceTabQueryTable';
-import WorkspaceTabTableFilters from '@/components/WorkspaceTabTableFilters';
-import ModalNewTableRow from '@/components/ModalNewTableRow';
-import ModalFakerRows from '@/components/ModalFakerRows';
+import BaseLoader from '@/components/BaseLoader.vue';
+import WorkspaceTabQueryTable from '@/components/WorkspaceTabQueryTable.vue';
+import WorkspaceTabTableFilters from '@/components/WorkspaceTabTableFilters.vue';
+import ModalNewTableRow from '@/components/ModalNewTableRow.vue';
+import ModalFakerRows from '@/components/ModalFakerRows.vue';
 import { mapGetters, mapActions } from 'vuex';
 import tableTabs from '@/mixins/tableTabs';
 

@@ -57,7 +57,7 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import Draggable from 'vuedraggable';
-import SettingBarContext from '@/components/SettingBarContext';
+import SettingBarContext from '@/components/SettingBarContext.vue';
 
 export default {
    name: 'TheSettingBar',

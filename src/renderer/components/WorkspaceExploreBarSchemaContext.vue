@@ -96,9 +96,9 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import BaseContextMenu from '@/components/BaseContextMenu';
-import ConfirmModal from '@/components/BaseConfirmModal';
-import ModalEditSchema from '@/components/ModalEditSchema';
+import BaseContextMenu from '@/components/BaseContextMenu.vue';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
+import ModalEditSchema from '@/components/ModalEditSchema.vue';
 import Schema from '@/ipc-api/Schema';
 
 export default {

@@ -11,7 +11,6 @@
 
 <script>
 import * as ace from 'ace-builds';
-import 'ace-builds/webpack-resolver';
 import { mapGetters } from 'vuex';
 
 export default {

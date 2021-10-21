@@ -126,8 +126,8 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import Draggable from 'vuedraggable';
-import TableRow from '@/components/WorkspaceTabPropsTableRow';
-import TableContext from '@/components/WorkspaceTabPropsTableContext';
+import TableRow from '@/components/WorkspaceTabPropsTableRow.vue';
+import TableContext from '@/components/WorkspaceTabPropsTableContext.vue';
 
 export default {
    name: 'WorkspaceTabPropsTableFields',

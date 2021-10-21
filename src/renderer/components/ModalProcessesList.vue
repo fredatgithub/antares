@@ -135,9 +135,9 @@
 import { mapGetters, mapActions } from 'vuex';
 import arrayToFile from '../libs/arrayToFile';
 import Schema from '@/ipc-api/Schema';
-import BaseVirtualScroll from '@/components/BaseVirtualScroll';
-import ModalProcessesListRow from '@/components/ModalProcessesListRow';
-import ModalProcessesListContext from '@/components/ModalProcessesListContext';
+import BaseVirtualScroll from '@/components/BaseVirtualScroll.vue';
+import ModalProcessesListRow from '@/components/ModalProcessesListRow.vue';
+import ModalProcessesListContext from '@/components/ModalProcessesListContext.vue';
 
 export default {
    name: 'ModalProcessesList',

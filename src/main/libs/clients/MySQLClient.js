@@ -1,7 +1,7 @@
 'use strict';
 import mysql from 'mysql2/promise';
 import { AntaresCore } from '../AntaresCore';
-import dataTypes from 'common/data-types/mysql';
+import * as dataTypes from 'common/data-types/mysql';
 import * as SSH2Promise from 'ssh2-promise';
 
 export class MySQLClient extends AntaresCore {

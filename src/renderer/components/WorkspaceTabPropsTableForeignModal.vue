@@ -205,7 +205,7 @@
 import { mapActions } from 'vuex';
 import { uidGen } from 'common/libs/uidGen';
 import Tables from '@/ipc-api/Tables';
-import ConfirmModal from '@/components/BaseConfirmModal';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
 
 export default {
    name: 'WorkspaceTabPropsTableForeignModal',

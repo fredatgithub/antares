@@ -32,8 +32,8 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import { uidGen } from 'common/libs/uidGen';
-import BaseContextMenu from '@/components/BaseContextMenu';
-import ConfirmModal from '@/components/BaseConfirmModal';
+import BaseContextMenu from '@/components/BaseContextMenu.vue';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
 
 export default {
    name: 'SettingBarContext',

@@ -299,9 +299,9 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import localesNames from '@/i18n/supported-locales';
-import ModalSettingsUpdate from '@/components/ModalSettingsUpdate';
-import ModalSettingsChangelog from '@/components/ModalSettingsChangelog';
-import BaseTextEditor from '@/components/BaseTextEditor';
+import ModalSettingsUpdate from '@/components/ModalSettingsUpdate.vue';
+import ModalSettingsChangelog from '@/components/ModalSettingsChangelog.vue';
+import BaseTextEditor from '@/components/BaseTextEditor.vue';
 const { shell } = require('electron');
 
 export default {

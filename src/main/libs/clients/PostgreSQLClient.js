@@ -2,7 +2,7 @@
 import { Pool, Client, types } from 'pg';
 import { parse } from 'pgsql-ast-parser';
 import { AntaresCore } from '../AntaresCore';
-import dataTypes from 'common/data-types/postgresql';
+import * as dataTypes from 'common/data-types/postgresql';
 import * as SSH2Promise from 'ssh2-promise';
 
 function pgToString (value) {

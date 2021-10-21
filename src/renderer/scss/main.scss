@@ -1,4 +1,5 @@
-@import "~spectre.css/src/variables";
+
+@import "spectre.css/src/variables";
 @import "variables";
 @import "transitions";
 @import "data-types";
@@ -8,8 +9,8 @@
 @import "db-icons";
 @import "themes/dark-theme";
 @import "themes/light-theme";
-@import "~spectre.css/src/spectre";
-@import "~spectre.css/src/spectre-exp";
+@import "spectre.css/src/spectre";
+@import "spectre.css/src/spectre-exp";
 
 body {
   user-select: none;

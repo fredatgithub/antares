@@ -204,9 +204,9 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import BaseLoader from '@/components/BaseLoader';
-import QueryEditor from '@/components/QueryEditor';
-import WorkspaceTabPropsFunctionParamsModal from '@/components/WorkspaceTabPropsFunctionParamsModal';
+import BaseLoader from '@/components/BaseLoader.vue';
+import QueryEditor from '@/components/QueryEditor.vue';
+import WorkspaceTabPropsFunctionParamsModal from '@/components/WorkspaceTabPropsFunctionParamsModal.vue';
 import Functions from '@/ipc-api/Functions';
 
 export default {

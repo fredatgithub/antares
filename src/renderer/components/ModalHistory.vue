@@ -98,7 +98,7 @@
 <script>
 import moment from 'moment';
 import { mapGetters, mapActions } from 'vuex';
-import BaseVirtualScroll from '@/components/BaseVirtualScroll';
+import BaseVirtualScroll from '@/components/BaseVirtualScroll.vue';
 
 export default {
    name: 'ModalHistory',

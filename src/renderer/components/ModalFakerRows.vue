@@ -188,7 +188,7 @@ import moment from 'moment';
 import { TEXT, LONG_TEXT, NUMBER, FLOAT, DATE, TIME, DATETIME, BLOB, BIT } from 'common/fieldTypes';
 import { mapGetters, mapActions } from 'vuex';
 import Tables from '@/ipc-api/Tables';
-import FakerSelect from '@/components/FakerSelect';
+import FakerSelect from '@/components/FakerSelect.vue';
 
 export default {
    name: 'ModalFakerRows',

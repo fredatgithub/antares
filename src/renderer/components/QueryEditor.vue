@@ -10,7 +10,6 @@
 
 <script>
 import * as ace from 'ace-builds';
-import 'ace-builds/webpack-resolver';
 import '../libs/ext-language_tools';
 import { mapGetters, mapActions } from 'vuex';
 import Tables from '@/ipc-api/Tables';

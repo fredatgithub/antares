@@ -71,7 +71,7 @@
 </template>
 
 <script>
-import customizations from 'common/customizations';
+import * as customizations from 'common/customizations';
 import { NUMBER, FLOAT } from 'common/fieldTypes';
 
 export default {

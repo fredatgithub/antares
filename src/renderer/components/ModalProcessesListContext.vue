@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import BaseContextMenu from '@/components/BaseContextMenu';
+import BaseContextMenu from '@/components/BaseContextMenu.vue';
 
 export default {
    name: 'ModalProcessesListContext',

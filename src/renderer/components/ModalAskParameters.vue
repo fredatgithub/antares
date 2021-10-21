@@ -49,7 +49,7 @@
 
 <script>
 import { NUMBER, FLOAT } from 'common/fieldTypes';
-import ConfirmModal from '@/components/BaseConfirmModal';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
 
 export default {
    name: 'ModalAskParameters',

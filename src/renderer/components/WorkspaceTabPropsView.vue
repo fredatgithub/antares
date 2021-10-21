@@ -121,8 +121,8 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import BaseLoader from '@/components/BaseLoader';
-import QueryEditor from '@/components/QueryEditor';
+import BaseLoader from '@/components/BaseLoader.vue';
+import QueryEditor from '@/components/QueryEditor.vue';
 import Views from '@/ipc-api/Views';
 
 export default {

@@ -138,7 +138,7 @@
 </template>
 
 <script>
-import ConfirmModal from '@/components/BaseConfirmModal';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
 import { VueMaskDirective } from 'v-mask';
 import moment from 'moment';
 

@@ -181,10 +181,10 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import { uidGen } from 'common/libs/uidGen';
-import QueryEditor from '@/components/QueryEditor';
-import BaseLoader from '@/components/BaseLoader';
-import WorkspaceTabPropsRoutineParamsModal from '@/components/WorkspaceTabPropsRoutineParamsModal';
-import ModalAskParameters from '@/components/ModalAskParameters';
+import QueryEditor from '@/components/QueryEditor.vue';
+import BaseLoader from '@/components/BaseLoader.vue';
+import WorkspaceTabPropsRoutineParamsModal from '@/components/WorkspaceTabPropsRoutineParamsModal.vue';
+import ModalAskParameters from '@/components/ModalAskParameters.vue';
 import Routines from '@/ipc-api/Routines';
 
 export default {

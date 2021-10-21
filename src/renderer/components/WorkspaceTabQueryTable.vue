@@ -108,10 +108,10 @@
 import { uidGen } from 'common/libs/uidGen';
 import arrayToFile from '../libs/arrayToFile';
 import { TEXT, LONG_TEXT, BLOB } from 'common/fieldTypes';
-import BaseVirtualScroll from '@/components/BaseVirtualScroll';
-import WorkspaceTabQueryTableRow from '@/components/WorkspaceTabQueryTableRow';
-import TableContext from '@/components/WorkspaceTabQueryTableContext';
-import ConfirmModal from '@/components/BaseConfirmModal';
+import BaseVirtualScroll from '@/components/BaseVirtualScroll.vue';
+import WorkspaceTabQueryTableRow from '@/components/WorkspaceTabQueryTableRow.vue';
+import TableContext from '@/components/WorkspaceTabQueryTableContext.vue';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
 import { mapActions, mapGetters } from 'vuex';
 import moment from 'moment';
 

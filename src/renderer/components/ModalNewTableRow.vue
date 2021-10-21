@@ -122,7 +122,7 @@ import { TEXT, LONG_TEXT, NUMBER, FLOAT, DATE, TIME, DATETIME, BLOB, BIT } from 
 import { VueMaskDirective } from 'v-mask';
 import { mapGetters, mapActions } from 'vuex';
 import Tables from '@/ipc-api/Tables';
-import ForeignKeySelect from '@/components/ForeignKeySelect';
+import ForeignKeySelect from '@/components/ForeignKeySelect.vue';
 
 export default {
    name: 'ModalNewTableRow',

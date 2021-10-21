@@ -104,9 +104,9 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import { uidGen } from 'common/libs/uidGen';
-import BaseLoader from '@/components/BaseLoader';
-import QueryEditor from '@/components/QueryEditor';
-import ModalAskParameters from '@/components/ModalAskParameters';
+import BaseLoader from '@/components/BaseLoader.vue';
+import QueryEditor from '@/components/QueryEditor.vue';
+import ModalAskParameters from '@/components/ModalAskParameters.vue';
 import Functions from '@/ipc-api/Functions';
 
 export default {

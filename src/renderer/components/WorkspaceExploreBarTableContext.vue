@@ -73,8 +73,8 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import BaseContextMenu from '@/components/BaseContextMenu';
-import ConfirmModal from '@/components/BaseConfirmModal';
+import BaseContextMenu from '@/components/BaseContextMenu.vue';
+import ConfirmModal from '@/components/BaseConfirmModal.vue';
 import Tables from '@/ipc-api/Tables';
 
 export default {

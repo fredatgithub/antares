@@ -139,11 +139,11 @@
 import { format } from 'sql-formatter';
 import { mapGetters, mapActions } from 'vuex';
 import Schema from '@/ipc-api/Schema';
-import QueryEditor from '@/components/QueryEditor';
-import BaseLoader from '@/components/BaseLoader';
-import WorkspaceTabQueryTable from '@/components/WorkspaceTabQueryTable';
-import WorkspaceTabQueryEmptyState from '@/components/WorkspaceTabQueryEmptyState';
-import ModalHistory from '@/components/ModalHistory';
+import QueryEditor from '@/components/QueryEditor.vue';
+import BaseLoader from '@/components/BaseLoader.vue';
+import WorkspaceTabQueryTable from '@/components/WorkspaceTabQueryTable.vue';
+import WorkspaceTabQueryEmptyState from '@/components/WorkspaceTabQueryEmptyState.vue';
+import ModalHistory from '@/components/ModalHistory.vue';
 import tableTabs from '@/mixins/tableTabs';
 
 export default {
