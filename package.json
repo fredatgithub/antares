@@ -5,7 +5,7 @@
   "description": "A cross-platform easy to use SQL client.",
   "license": "MIT",
   "repository": "https://github.com/Fabio286/antares.git",
-  "main": "main/index.js",
+  "main": "src/main/dist/index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development electron-webpack dev",
     "compile": "electron-webpack",
@@ -20,7 +20,7 @@
     "postinstall": "electron-builder install-app-deps",
     "vite:build": "node scripts/build.js",
     "vite:precompile": "cross-env MODE=production npm run vite:build",
-    "vite:compile": "electron-builder",
+    "vite:compile": "electron-builder build --config electron-builder.config.js --dir",
     "vite:watch": "node scripts/watch.js"
   },
   "author": "Fabio Di Stasio <fabio286@gmail.com>",

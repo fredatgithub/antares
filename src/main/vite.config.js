@@ -1,5 +1,5 @@
 import { node } from '../../electron-vendors.config.json';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import { builtinModules } from 'module';
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
@@ -23,7 +23,7 @@ const config = {
    build: {
       sourcemap: 'inline',
       target: `node${node}`,
-      outDir: resolve(PACKAGE_ROOT, '../../dist/main'),
+      outDir: 'dist',
       assetsDir: '.',
       minify: process.env.MODE === 'development' ? false : 'terser',
       terserOptions: {
@@ -41,7 +41,6 @@ const config = {
          external: [
             'electron',
             'electron-devtools-installer',
-            'pg-native',
             ...builtinModules
          ],
          output: {

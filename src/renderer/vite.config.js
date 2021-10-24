@@ -1,7 +1,7 @@
 /* eslint-env node */
 
 import { chrome } from '../../electron-vendors.config.json';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import { builtinModules } from 'module';
 import { createVuePlugin } from 'vite-plugin-vue2';
 
@@ -31,7 +31,7 @@ const config = {
    build: {
       sourcemap: true,
       target: `chrome${chrome}`,
-      outDir: resolve(PACKAGE_ROOT, '../../dist/renderer'),
+      outDir: 'dist',
       assetsDir: '.',
       terserOptions: {
          ecma: 2020,
